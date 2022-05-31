@@ -1,0 +1,35 @@
+---
+title: "Reviving oceans"
+subtitle: "Global Fisheries Landings V4.0"
+author: "James Goldie, 360info"
+date: "2022-05-30"
+code-fold: true
+theme: style/article.scss
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(pins)
+library(here)
+```
+
+The data is [Global Fisheries Landings V4.0](https://metadata.imas.utas.edu.au/geonetwork/srv/api/records/5c4590d3-a45a-4d37-bf8b-ecd145cb356d). This is the data that feeds into Sea Around Us, 
+
+```{r}
+#| label: import
+data_cache <- here("data", ".cache")
+dir.create(data_cache, showWarnings = FALSE)
+
+dataset_base <- "https://data.imas.utas.edu.au/attachments/5c4590d3-a45a-4d37-bf8b-ecd145cb356d/"
+
+board_url(
+  c(
+    codes = paste(dataset_base, "Codes.xlsx")
+  ), cache = data_cache) #%>%
+  # pin_download("sau") ->
+sau
+
+saudata <- read_csv(sau)
+```
