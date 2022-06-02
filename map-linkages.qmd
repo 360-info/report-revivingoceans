@@ -59,25 +59,30 @@ viewof map = {
     center: [-74.5, 40],
     zoom: 6,
     style: "/style.json"
-    // style: "https://demotiles.maplibre.org/style.json"
-    // style: {
-    //   sources: {
-    //     "maplibre": {
-    //       "/tiles/tiles.json"
-    //     }
-    //   }
-    // }
   });
 
   // Wait until the map loads.
   map.on("load", () => {
     container.value = map;
     container.dispatchEvent(new CustomEvent("input"));
+
+    // add a .tif file source and layer
+    map.addSource("raster-example-source", {
+      type: "raster",
+      url: "/data/totals/raster/totals-nonind-2015-webmerc.tif"
+    });
+    map.addLayer({
+      id: "raster-example-layer",
+      source: "raster-example-source",
+      type: "raster",
+      paint: {
+        "raster-opacity": 1
+      }
+    });
+    console.log("Example TIF added!");
   });
 }
 ```
-
-
 
 <!-- share/about popups -->
 
