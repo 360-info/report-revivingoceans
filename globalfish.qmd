@@ -12,10 +12,12 @@ theme: style/article.scss
 #| include: false
 library(tidyverse)
 library(pins)
+library(readxl)
+library(terra)
 library(here)
 ```
 
-The data is [Global Fisheries Landings V4.0](https://metadata.imas.utas.edu.au/geonetwork/srv/api/records/5c4590d3-a45a-4d37-bf8b-ecd145cb356d). This is the data that feeds into Sea Around Us, 
+The data is [Global Fisheries Landings V4.0](https://metadata.imas.utas.edu.au/geonetwork/srv/api/records/5c4590d3-a45a-4d37-bf8b-ecd145cb356d). There is an associated [paper](https://www.nature.com/articles/sdata201739) describing the dataset too.
 
 ```{r}
 #| label: import
@@ -26,10 +28,65 @@ dataset_base <- "https://data.imas.utas.edu.au/attachments/5c4590d3-a45a-4d37-bf
 
 board_url(
   c(
-    codes = paste(dataset_base, "Codes.xlsx")
+    codes = paste0(dataset_base, "Codes.xlsx")
+    catch_nonind_2015_2015 = paste0(dataset_base, "CatchNInd2015_2015.csv")
   ), cache = data_cache) #%>%
   # pin_download("sau") ->
 sau
 
 saudata <- read_csv(sau)
+```
+
+Cells are 0.5 deg * 0.5 deg. Cell 1 is centered at 90N, 179.75 W; subsequent cells are numbered by row then column, so cell 1 is 179.**25** W. Total domain is 360 rows * 720 columns. 
+
+```{r}
+#| label: indexind
+x <- read_csv(here("data", "IndexInd.csv"))
+# 456 785 rows
+
+# is this complete?
+x %>%
+  select(year = IYear, cell_num = CNumber, tax = Taxonkey) %>%
+  complete(year, cell_num, tax)
+```
+
+```{r}
+#| label: cellindex
+cells <-
+  read_excel(here("data", "Codes.xlsx"), sheet = "Cell") %>%
+  mutate(Cell = as.integer(Cell))
+```
+
+```{r}
+y <- read_csv(here("data", "CatchNInd2015_2015.csv"), col_types = "iiddd")
+
+# aggregate the numbers
+y %>%
+  select(-ID) %>%
+  group_by(Cell) %>%
+  summarise(across(c(Reported, IUU, Discards), sum, na.rm = TRUE)) ->
+y_sum
+
+y_sum %>%
+  left_join(cells, by = "Cell") %>%
+  select(lon_centre = LonCentre, lat_centre = LatCentre,
+    cell_size_sqkm = OceanAreasqkm, tonnes_reported = Reported,
+    tonnes_iuu.est = IUU, tonnes_discards.est = Discards) %>%
+  mutate(
+    tonnes_total = (tonnes_reported + tonnes_iuu.est + tonnes_discards.est),
+    tonnes_reported_persqkm = tonnes_reported / cell_size_sqkm,
+    tonnes_iuu.est_persqkm = tonnes_iuu.est / cell_size_sqkm,
+    tonnes_discards.est_persqkm = tonnes_discards.est / cell_size_sqkm,
+    tonnes_total_persqkm = tonnes_total / cell_size_sqkm,
+    frac_reported = tonnes_reported / tonnes_total,
+    frac_iuu.est = tonnes_iuu.est / tonnes_total,
+    frac_discards.est = tonnes_discards.est  / tonnes_total) %>%
+  write_csv(here("data", "totals", "csv", "totals-nonind-2015.csv")) %>%
+  select(lon_centre, lat_centre, cell_size_sqkm, ends_with("persqkm"),
+    starts_with("frac")) %>%
+  rast(type = "xyz", digits = 2, crs = "+proj=longlat +datum=WGS84 +no_defs") %>%
+  writeRaster(
+    here("data", "totals", "raster", "totals-nonind-2015.tif"),
+    overwrite = TRUE) ->
+y_rast
 ```
