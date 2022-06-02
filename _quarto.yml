@@ -1,4 +1,7 @@
 project:
   type: website
   output-dir: out
-  
+  resources:
+    - "style.json"
+    - "tiles"
+    - "font"
