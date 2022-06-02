@@ -13,7 +13,7 @@
             "id": "background",
             "type": "background",
             "paint": {
-                "background-color": "#D8F2FF"
+                "background-color": "#e3e8e8"
             },
             "filter": [
                 "all"
@@ -28,7 +28,8 @@
             "type": "line",
             "paint": {
                 "line-blur": 0.5,
-                "line-color": "#198EC8",
+                "line-color": "#a2a6a6",
+                "line-opacity": 0.75,
                 "line-width": {
                     "stops": [
                         [
@@ -67,252 +68,7 @@
             "id": "countries-fill",
             "type": "fill",
             "paint": {
-                "fill-color": [
-                    "match",
-                    [
-                        "get",
-                        "ADM0_A3"
-                    ],
-                    [
-                        "ARM",
-                        "ATG",
-                        "AUS",
-                        "BTN",
-                        "CAN",
-                        "COG",
-                        "CZE",
-                        "GHA",
-                        "GIN",
-                        "HTI",
-                        "ISL",
-                        "JOR",
-                        "KHM",
-                        "KOR",
-                        "LVA",
-                        "MLT",
-                        "MNE",
-                        "MOZ",
-                        "PER",
-                        "SAH",
-                        "SGP",
-                        "SLV",
-                        "SOM",
-                        "TJK",
-                        "TUV",
-                        "UKR",
-                        "WSM"
-                    ],
-                    "#D6C7FF",
-                    [
-                        "AZE",
-                        "BGD",
-                        "CHL",
-                        "CMR",
-                        "CSI",
-                        "DEU",
-                        "DJI",
-                        "GUY",
-                        "HUN",
-                        "IOA",
-                        "JAM",
-                        "LBN",
-                        "LBY",
-                        "LSO",
-                        "MDG",
-                        "MKD",
-                        "MNG",
-                        "MRT",
-                        "NIU",
-                        "NZL",
-                        "PCN",
-                        "PYF",
-                        "SAU",
-                        "SHN",
-                        "STP",
-                        "TTO",
-                        "UGA",
-                        "UZB",
-                        "ZMB"
-                    ],
-                    "#EBCA8A",
-                    [
-                        "AGO",
-                        "ASM",
-                        "ATF",
-                        "BDI",
-                        "BFA",
-                        "BGR",
-                        "BLZ",
-                        "BRA",
-                        "CHN",
-                        "CRI",
-                        "ESP",
-                        "HKG",
-                        "HRV",
-                        "IDN",
-                        "IRN",
-                        "ISR",
-                        "KNA",
-                        "LBR",
-                        "LCA",
-                        "MAC",
-                        "MUS",
-                        "NOR",
-                        "PLW",
-                        "POL",
-                        "PRI",
-                        "SDN",
-                        "TUN",
-                        "UMI",
-                        "USA",
-                        "USG",
-                        "VIR",
-                        "VUT"
-                    ],
-                    "#C1E599",
-                    [
-                        "ARE",
-                        "ARG",
-                        "BHS",
-                        "CIV",
-                        "CLP",
-                        "DMA",
-                        "ETH",
-                        "GAB",
-                        "GRD",
-                        "HMD",
-                        "IND",
-                        "IOT",
-                        "IRL",
-                        "IRQ",
-                        "ITA",
-                        "KOS",
-                        "LUX",
-                        "MEX",
-                        "NAM",
-                        "NER",
-                        "PHL",
-                        "PRT",
-                        "RUS",
-                        "SEN",
-                        "SUR",
-                        "TZA",
-                        "VAT"
-                    ],
-                    "#E7E58F",
-                    [
-                        "AUT",
-                        "BEL",
-                        "BHR",
-                        "BMU",
-                        "BRB",
-                        "CYN",
-                        "DZA",
-                        "EST",
-                        "FLK",
-                        "GMB",
-                        "GUM",
-                        "HND",
-                        "JEY",
-                        "KGZ",
-                        "LIE",
-                        "MAF",
-                        "MDA",
-                        "NGA",
-                        "NRU",
-                        "SLB",
-                        "SOL",
-                        "SRB",
-                        "SWZ",
-                        "THA",
-                        "TUR",
-                        "VEN",
-                        "VGB"
-                    ],
-                    "#98DDA1",
-                    [
-                        "AIA",
-                        "BIH",
-                        "BLM",
-                        "BRN",
-                        "CAF",
-                        "CHE",
-                        "COM",
-                        "CPV",
-                        "CUB",
-                        "ECU",
-                        "ESB",
-                        "FSM",
-                        "GAZ",
-                        "GBR",
-                        "GEO",
-                        "KEN",
-                        "LTU",
-                        "MAR",
-                        "MCO",
-                        "MDV",
-                        "NFK",
-                        "NPL",
-                        "PNG",
-                        "PRY",
-                        "QAT",
-                        "SLE",
-                        "SPM",
-                        "SYC",
-                        "TCA",
-                        "TKM",
-                        "TLS",
-                        "VNM",
-                        "WEB",
-                        "WSB",
-                        "YEM",
-                        "ZWE"
-                    ],
-                    "#83D5F4",
-                    [
-                        "ABW",
-                        "ALB",
-                        "AND",
-                        "ATC",
-                        "BOL",
-                        "COD",
-                        "CUW",
-                        "CYM",
-                        "CYP",
-                        "EGY",
-                        "FJI",
-                        "GGY",
-                        "IMN",
-                        "KAB",
-                        "KAZ",
-                        "KWT",
-                        "LAO",
-                        "MLI",
-                        "MNP",
-                        "MSR",
-                        "MYS",
-                        "NIC",
-                        "NLD",
-                        "PAK",
-                        "PAN",
-                        "PRK",
-                        "ROU",
-                        "SGS",
-                        "SVN",
-                        "SWE",
-                        "TGO",
-                        "TWN",
-                        "VCT",
-                        "ZAF"
-                    ],
-                    "#B1BBF9",
-                    [
-                        "ATA",
-                        "GRL"
-                    ],
-                    "#FFFFFF",
-                    "#EAB38F"
-                ]
+                "fill-color": "#eff1f1"
             },
             "filter": [
                 "all"
@@ -328,7 +84,7 @@
             "id": "countries-boundary",
             "type": "line",
             "paint": {
-                "line-color": "rgba(255, 255, 255, 1)",
+                "line-color": "#d3d8d8",
                 "line-width": {
                     "stops": [
                         [
@@ -353,11 +109,11 @@
                     "stops": [
                         [
                             3,
-                            0.5
+                            0.25
                         ],
                         [
                             6,
-                            1
+                            0.5
                         ]
                     ]
                 }
@@ -375,10 +131,10 @@
             "id": "geolines",
             "type": "line",
             "paint": {
-                "line-color": "#1077B0",
-                "line-opacity": 1,
+                "line-color": "#a2a8a8",
+                "line-opacity": 0.4,
                 "line-dasharray": [
-                    3,
+                    1,
                     3
                 ]
             },
@@ -395,48 +151,6 @@
             },
             "source": "maplibre",
             "maxzoom": 24,
-            "source-layer": "geolines"
-        },
-        {
-            "id": "geolines-label",
-            "type": "symbol",
-            "paint": {
-                "text-color": "#1077B0",
-                "text-halo-blur": 1,
-                "text-halo-color": "rgba(255, 255, 255, 1)",
-                "text-halo-width": 1
-            },
-            "filter": [
-                "all",
-                [
-                    "!=",
-                    "name",
-                    "International Date Line"
-                ]
-            ],
-            "layout": {
-                "text-font": [
-                    "Open Sans Semibold"
-                ],
-                "text-size": {
-                    "stops": [
-                        [
-                            2,
-                            12
-                        ],
-                        [
-                            6,
-                            16
-                        ]
-                    ]
-                },
-                "text-field": "{name}",
-                "visibility": "visible",
-                "symbol-placement": "line"
-            },
-            "source": "maplibre",
-            "maxzoom": 24,
-            "minzoom": 1,
             "source-layer": "geolines"
         },
         {
