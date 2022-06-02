@@ -29,7 +29,7 @@
             "paint": {
                 "line-blur": 0.5,
                 "line-color": "#a2a6a6",
-                "line-opacity": 0.75,
+                "line-opacity": 0.5,
                 "line-width": {
                     "stops": [
                         [
@@ -157,7 +157,8 @@
             "id": "countries-label",
             "type": "symbol",
             "paint": {
-                "text-color": "rgba(8, 37, 77, 1)",
+                "text-color": "#a2a6a6",
+                "text-opacity": 0.5,
                 "text-halo-blur": {
                     "stops": [
                         [
@@ -211,7 +212,7 @@
                     "stops": [
                         [
                             2,
-                            "{ABBREV}"
+                            "{NAME}"
                         ],
                         [
                             4,
