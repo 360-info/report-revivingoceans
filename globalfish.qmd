@@ -13,6 +13,11 @@ theme: style/article.scss
 library(tidyverse)
 library(pins)
 library(readxl)
+library(urltools)
+library(rvest)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(tidyterra)
 library(terra)
 library(here)
 ```
@@ -85,8 +90,117 @@ y_sum %>%
   select(lon_centre, lat_centre, cell_size_sqkm, ends_with("persqkm"),
     starts_with("frac")) %>%
   rast(type = "xyz", digits = 2, crs = "+proj=longlat +datum=WGS84 +no_defs") %>%
+  # project("epsg:3857") %>%
   writeRaster(
     here("data", "totals", "raster", "totals-nonind-2015.tif"),
     overwrite = TRUE) ->
 y_rast
+```
+
+MapLibre doesn't appear to support georeferenced TIFFs. It _does_ support non-georeferenced images such as PNGs, but we need to line them up correctly and style them ourselves.
+
+Correctly sized output can be produced with `terra::writeRaster`, and you can assign colours to values using `coltab()<-`, but it's a bit of a pain: although the internal data structures stores the values you're mapping to, you can only provide the colours. So you need to come up with factor levels, and... this is getting complicated.
+
+My cheeky way of getting 'round all this is to drop MapLibre entirely and just have the controls switch out static PNG maps produced with ggplot2.
+
+```{r}
+world <-
+  ne_countries(scale = "medium", returnclass = "sf") %>%
+  st_make_valid()
+
+sf::sf_use_s2(FALSE)
+
+read_csv(here("data", "totals", "csv", "totals-nonind-2015.csv")) %>%
+  select(lon_centre, lat_centre, tonnes_total_persqkm) %>%
+  mutate(kg_persqkm = tonnes_total_persqkm * 1000) %>%
+  select(-tonnes_total_persqkm) %>%
+  # mutate(
+  #   log10_kg_total_persqkm = log10(tonnes_total_persqkm * 1000),
+  #   kg_bin = cut(
+  #     log10(tonnes_total_persqkm * 1000),
+  #     breaks = (-10):10,
+  #     labels = paste("10 *", (-9):10, "kg/sqkm"))) %>%
+  # select(-tonnes_total_persqkm, -log10_kg_total_persqkm) %>%
+  rast(type = "xyz", digits = 2,
+    crs = "+proj=longlat +datum=WGS84 +no_defs") %>%
+  # writeRaster(
+  #   here("data", "totals", "raster", "totalpersqkm-nonind-2015-webmerc.png"),
+  #   overwrite = TRUE)
+  {
+    # this isn't fitting properly!
+    ggplot(data = world) +
+      geom_sf(colour = "#00000011", fill = "#f9f9f9", size = 0.5) +
+      geom_spatraster(data = ., interpolate = TRUE) +
+      coord_sf(crs = equal_earth, expand = FALSE,
+        # xlim = c(-179.99, 179.99),
+        # ylim = c(-75, 75)
+      ) +
+      scale_fill_fermenter(
+        name = "Annual catch (kg fish per square km)",
+        direction = 1,
+        na.value = NA,
+        breaks = 10 ^ c(-9, 6, -3, 0, 3, 6, 9),
+        trans = "log10", 
+        labels = scales::label_number(scale_cut = scales::cut_si(""))
+        ) +
+      theme_360() +
+      theme(
+        legend.direction = "horizontal",
+        legend.position = "top",
+        legend.key.width = unit(1, "inches"),
+        panel.border = element_rect(colour = "black", fill = NA),
+        panel.grid.major = element_line(size = 0.5, colour = "#00000011")
+      ) +
+      guides(fill = guide_colourbar(
+        title.position = "top",
+        title.hjust = 0.5
+        )) +
+      labs(
+        x = NULL, y = NULL,
+        caption = paste(
+          "**CHART:** James Goldie, 360info",
+          "**DATA:** Global Fisheries Landings V4.0",
+          sep = "<br>")) 
+  } %>%
+  save_360plot(
+    here("data", "totals", "png", "test2.png"),
+    shape = "sdtv-landscape")
+```
+
+Now let's do this for all the files. Keep in mind that some of them cover a period of more than one year, so we'll also have to divide the counts through by the number of years.
+
+```{r}
+
+# get all the csvs on the page (except the index files)
+dataset_base %>%
+  read_html() %>%
+  html_elements("a") %>%
+  html_attr("href") %>%
+  tibble(link = .) %>%
+  filter(str_detect(link, "^Catch")) %>%
+  mutate(
+    category = if_else(
+      str_detect(link, coll("NInd")),
+      "Non-industrial",
+      "Industrial"),
+    year_range = str_extract(link, "[:digit:]{4}_[:digit:]{4}")) %>%
+  separate(year_range, into = c("year_start", "year_end"), convert = TRUE) %>%
+  mutate(num_years = year_end - year_start + 1) ->
+dataset_files
+
+# now download and cache files
+dataset_files %>%
+  pull(link) %>%
+  paste0(dataset_base, .) %>%
+  set_names(basename(path(.))) %>%
+  board_url(cache = data_cache) ->
+dataset_board
+```
+
+Let's try to download them all:
+
+```{r}
+dataset_files %>%
+  mutate(cached_path = map(link, ~ pin_download(dataset_board, .x))) ->
+cached_files
 ```
