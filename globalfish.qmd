@@ -263,7 +263,7 @@ summarise_events <- function(path_ind, category, year_start, year_end) {
   # first, work out how many years we need (to get annual figures)
   year_count <- year_end - year_start + 1
 
-  path %>%
+  path_ind %>%
     read_csv(col_types = "iiddd") %>%
     select(-ID) %>%
     # calculate totals for each cell/year (in kg/yr, not tonnes)
@@ -409,4 +409,16 @@ equal_earth <- 'PROJCS["ProjWiz_Custom_Natural_Earth",
  UNIT["Meter",1.0]]'
 
 sf::sf_use_s2(FALSE)
+```
+
+And now let's process them all!
+
+```{r}
+dataset_cached %>%
+  mutate(path_ind = file.path(data_cache, path)) %>%
+  select(path_ind, category, year_start, year_end) %>%
+  pmap(summarise_events)
+
+  # summarise_events
+  
 ```
