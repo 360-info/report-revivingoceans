@@ -32,39 +32,32 @@ execute:
   (if there isn't room, put it in the ABOUT dialog) -->
 James Goldie, 360info
 
-Data: [GFLv4](https://metadata.imas.utas.edu.au/geonetwork/srv/api/records/5c4590d3-a45a-4d37-bf8b-ecd145cb356d)
+Data: [GFL4](https://metadata.imas.utas.edu.au/geonetwork/srv/api/records/5c4590d3-a45a-4d37-bf8b-ecd145cb356d)
 :::
 
 <!-- main content -->
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ```{ojs}
 viewof category = Inputs.radio(["Industrial", "Non-industrial"], {
+  value: "Industrial",
   label: "Fishing type"
 })
 ```
-:::
 
-::: {.column width="50%"}
 ```{ojs}
 viewof measure = Inputs.select(
   new Map([
-    ["Discard fraction",                      "frac_discards.est"]
-    ["Fraction IUU",                          "frac_iuu.est"]
-    ["Discards, estimated",                   "kg_discards.est_persqkm"]
-    ["IUU catch, estimated",                  "kg_iuu.est_persqkm"]
-    ["Reported catch",                        "kg_reported_persqkm"]
+    ["Discard fraction",                      "frac_discards.est"],
+    ["Fraction IUU",                          "frac_iuu.est"],
+    ["Discards, estimated",                   "kg_discards.est_persqkm"],
+    ["IUU catch, estimated",                  "kg_iuu.est_persqkm"],
+    ["Reported catch",                        "kg_reported_persqkm"],
     ["Total catch (reported + IUU estimate)", "kg_total_persqkm"]
-  )], {
-    value: "kg_total_persqkm"
+  ]), {
+    value: "kg_total_persqkm",
     label: "Measure"
   });
 ```
-:::
-
-::::
 
 ```{ojs}
 viewof year = Inputs.range([1950, 2015], {
@@ -79,27 +72,36 @@ viewof year = Inputs.range([1950, 2015], {
 
 // yeah, I should be using d3.bin...
 binYear = function(year) {
-  if (year <= 1954) return "1950-1954"
-  else if (year <= 1959) return "1955-1959"
-  else if (year <= 1964) return "1960-1964"
-  else if (year <= 1969) return "1965-1969"
-  else if (year <= 1974) return "1970-1974"
-  else if (year <= 1979) return "1975-1979"
-  else if (year <= 1984) return "1980-1984"
-  else if (year <= 1989) return "1985-1989"
-  else if (year <= 1994) return "1990-1994"
-  else if (year <= 1999) return "1995-1999"
-  else if (year <= 2004) return "2000-2004"
-  else if (year <= 2009) return "2005-2009"
-  else if (year <= 2014) return "2010-2014"
-  else if (year <= 2015) return "2015-2015"
-  else return undefined;
+  if (year < 1950) return undefined  
+    else if (year <= 1954) return "1950-1954"
+    else if (year <= 1959) return "1955-1959"
+    else if (year <= 1964) return "1960-1964"
+    else if (year <= 1969) return "1965-1969"
+    else if (year <= 1974) return "1970-1974"
+    else if (year <= 1979) return "1975-1979"
+    else if (year <= 1984) return "1980-1984"
+    else if (year <= 1989) return "1985-1989"
+    else if (year <= 1994) return "1990-1994"
+    else if (year <= 1999) return "1995-1999"
+    else if (year <= 2004) return "2000-2004"
+    else if (year <= 2009) return "2005-2009"
+    else if (year <= 2014) return "2010-2014"
+    else if (year <= 2015) return "2015-2015"
+    else return undefined;
 }
 
 binnedYear = binYear(year);
 ```
 
-![](/totals/png/${category}-${measure}-{binnedYear}.png)
+```{ojs}
+//| label: selectedimage
+
+// getting a bit of a flash when updating this -
+// perhaps doing some async to wait for it to load
+// would be better?
+
+html`<img src="/data/totals/png/${category}-${measure}-${binnedYear}.png" style="width:100%;"></img>`
+```
 
 <!-- share/about popups -->
 
