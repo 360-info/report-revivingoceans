@@ -5,4 +5,4 @@ project:
     - "style.json"
     - "tiles"
     - "font"
-    - "data/totals/raster"
+    - "data/totals/png"
