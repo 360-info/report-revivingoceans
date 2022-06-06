@@ -18,6 +18,21 @@ Data in these charts comes from:
 
 **Please attribute 360info and the data sources when you use and remix these visualisations.**
 
+## Add the interactive to your story
+
+If you just want to add the interactive to your story, copy the following embed code and paste it into your editor:
+
+```html
+<iframe
+  src="https://360info-revivingoceans.pages.dev/globalfishmap.html"
+  title="Measure of reported and illegal fishing, as well as discarded fish since 1950. Data comes from the Global Fisheries Landings v4 dataset."
+  width="500"
+  height="670"
+  scrolling="no"
+  style="border:none;">
+</iframe>
+```
+
 ## Reproduce the analysis
 
 We typically publish graphics using [Quarto](https://quarto.org) notebooks, which can be found in the`*.qmd` files. Quarto allows reproducible analysis and visualisation to be done in a mix of languages, but we typically use [R](https://r-project,.org) and [Observable JS](https://observablehq.com/@observablehq/observables-not-javascript).
