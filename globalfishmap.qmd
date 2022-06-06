@@ -1,6 +1,6 @@
 ---
 title: "Global fishing"
-subtitle: "Fish are a significant part of diets globally, but many fish are **caught illegally or discarded.** This map shows the **global fishing hotspots.**"
+subtitle: "Illegal, unregulated and unreported fishing is a global problem, but the true scale remains unclear.<br><br>Here is what we know."
 page-layout: custom
 theme: none
 css:
