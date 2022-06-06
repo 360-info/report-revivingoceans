@@ -36,23 +36,68 @@ Editor Name, 360info
 Data: ORG
 :::
 
-::: {#map style="width: 100%; height: 80vh"}
-:::
-
 ```{ojs}
 // load maplibre-gl. it's a bit finnicky...
-maplibregl = require('maplibre-gl@2.1.9/dist/maplibre-gl.js').catch(() => window["maplibregl"]);
+maplibregl = require("maplibre-gl@2.1.9/dist/maplibre-gl.js").catch(() => window["maplibregl"]);
+
+// tempcontrol = require("maplibre-gl-temporal-control@1.0.3")
 ```
 
 ```{ojs}
 //| column: screen
 
-map = new maplibregl.Map({
-  container: "map",
-  style: "https://demotiles.maplibre.org/style.json",
-  center: [-74.5, 40],
-  zoom: 3
+viewof map = {
+  let container = html`<div style='height:80vh;' />`;
+
+  // Give the container dimensions.
+  yield container;
+
+  // Create the \`map\` object with the mapboxgl.Map constructor, referencing
+  // the container div
+  let map = new maplibregl.Map({
+    container,
+    center: [127.5, -15 ],
+    zoom: 3,
+    style: "/style.json"
   });
+
+  // Wait until the map loads.
+  map.on("load", () => {
+    container.value = map;
+    container.dispatchEvent(new CustomEvent("input"));
+
+    // add a .png file source and layer
+    // (would love to do geotiff, but they're not
+    // supported out of the box!)
+    map.addSource("raster-example-source", {
+      type: "image",
+      // url: "/data/totals/raster/totalpersqkm-nonind-2015-webmerc.png",
+      url: "/data/totals/png/test.png",
+      coordinates: [
+        [-180, 86.5],
+        [180, 86.5],
+        [180, -85],
+        [-180, -85],
+      ]
+    });
+    map.addLayer({
+      id: "raster-example-layer",
+      source: "raster-example-source",
+      type: "raster",
+      minzoom: 0,
+      maxzoom: 24,
+      paint: {
+        "raster-opacity": 0.8,
+        "raster-resampling": "nearest"
+      }
+    });
+    console.log("Example TIF added!");
+  });
+}
+```
+
+```{ojs}
+map
 ```
 
 <!-- share/about popups -->

@@ -44,6 +44,10 @@ So this is annual catch data (the `catch_sum` and the `real_value`), broken down
 * country (`fishing_entity`)
 * species
 * sector type
+  - Industrial: ???
+  _ Subsistence: somebody fishing to feed _themself_
+  _ Artisanal: "small-scale, low-tech, low-capital, shore-based fishing by individuals"
+  _ Recreational: ???
 * gear type
 
 
