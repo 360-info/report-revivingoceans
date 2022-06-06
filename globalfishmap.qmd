@@ -156,12 +156,12 @@ Copy and paste the following code:
 ::: {.embedcode}
 ```
 <iframe
-src="https://360info-revivingoceans.pages.dev/
-globalfishmap.html" title="Measure of reported
-and illegal fishing, as well as discarded fish
-since 1950. Data comes from the Global Fisheries
-Landings v4 dataset." width="500" height="670"
-scrolling="no" style="border:none;"></iframe>
+src="https://360info-revivingoceans.pages.dev/globalfishmap.html"
+title="Measure of reported and illegal fishing, as
+well as discarded fish since 1950. Data comes from
+the Global Fisheries Landings v4 dataset."
+width="500" height="670" scrolling="no"
+style="border:none;"></iframe>
 ```
 :::
 
