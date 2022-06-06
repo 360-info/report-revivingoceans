@@ -284,8 +284,8 @@ summarise_events <- function(path_ind, category, year_start, year_end) {
       frac_reported = kg_reported / kg_total,
       frac_iuu.est = kg_iuu.est / kg_total,
       frac_discards.est = kg_discards.est  / kg_total) -># %>%
-    # write_csv(here("data", "totals", "csv",
-    #   paste0("totals-", category, "-", start_year, "-", end_year, ".csv"))) ->
+    write_csv(here("data", "totals", "csv",
+      paste0("totals-", category, "-", year_start, "-", year_end, ".csv"))) ->
   totals
     
   # write out a raster
@@ -308,12 +308,12 @@ summarise_events <- function(path_ind, category, year_start, year_end) {
       "kg_reported_persqkm", "kg_iuu.est_persqkm", "kg_discards.est_persqkm",
       "frac_iuu.est", "frac_discards.est"),
     longname = c(
-      "Total (reported + IUU) avg. annual catch (kg fish/sq. km)",
-      "Reported avg. annual catch (kg fish/sq. km)",
-      "Estimated avg. annual IUU catch (kg fish/sq. km)",
-      "Estimated caught but discarded fish (kg fish/sq. km)",
-      "Estimated IUU percentage of avg. annual catch",
-      "Estimated avg. annual discard as percentage of catch"),
+      "Total (reported + illegal) catch (kg/sqkm/year)",
+      "Reported catch (kg/sqkm/year)",
+      "Estimated illegal (IUU) catch (kg/sqkm/year)",
+      "Estimated caught but discarded fish (kg/sqkm/year)",
+      "Estimated IUU percentage of total catch",
+      "Estimated discard as percentage of total catch"),
     palette_name = c("Blues", "BuGn", "YlOrRd", "BuPu", "RdYlBu", "PuOr"),
     palette_dir = c(rep(1, 4), -1, 1))
 
@@ -366,7 +366,6 @@ summarise_events <- function(path_ind, category, year_start, year_end) {
           ) +
           guides(
             fill = guide_colourbar(
-              # title = paste(map_col$longname, "in", year_start, "to", year_end),
               title.position = "top",
               title.hjust = 0.5
             )) +
@@ -418,7 +417,5 @@ dataset_cached %>%
   mutate(path_ind = file.path(data_cache, path)) %>%
   select(path_ind, category, year_start, year_end) %>%
   pmap(summarise_events)
-
-  # summarise_events
   
 ```
