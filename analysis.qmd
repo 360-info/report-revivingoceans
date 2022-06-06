@@ -1,0 +1,424 @@
+---
+title: "Reviving oceans"
+subtitle: "Global Fisheries Landings V4.0"
+author: "James Goldie, 360info"
+date: "2022-05-30"
+code-fold: true
+theme: style/article.scss
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(pins)
+library(readxl)
+library(urltools)
+library(rvest)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(tidyterra)
+library(terra)
+library(themes360info)
+library(ggtext)
+library(here)
+```
+
+The data is [Global Fisheries Landings V4.0](https://metadata.imas.utas.edu.au/geonetwork/srv/api/records/5c4590d3-a45a-4d37-bf8b-ecd145cb356d). There is an associated [paper](https://www.nature.com/articles/sdata201739) describing the dataset too.
+
+
+```{r}
+#| label: import
+data_cache <- here("data", ".cache")
+dir.create(data_cache, showWarnings = FALSE)
+dataset_base <- "https://data.imas.utas.edu.au/attachments/5c4590d3-a45a-4d37-bf8b-ecd145cb356d/"
+```
+
+## Test case
+
+```{r}
+#| label: testimport
+board_url(
+  c(
+    codes = paste0(dataset_base, "Codes.xlsx")
+    catch_nonind_2015_2015 = paste0(dataset_base, "CatchNInd2015_2015.csv")
+  ), cache = data_cache) #%>%
+  # pin_download("sau") ->
+sau
+
+saudata <- read_csv(sau)
+```
+
+Cells are 0.5 deg * 0.5 deg. Cell 1 is centered at 90N, 179.75 W; subsequent cells are numbered by row then column, so cell 1 is 179.**25** W. Total domain is 360 rows * 720 columns. 
+
+```{r}
+#| label: indexind
+x <- read_csv(here("data", "IndexInd.csv"))
+# 456 785 rows
+
+# is this complete?
+x %>%
+  select(year = IYear, cell_num = CNumber, tax = Taxonkey) %>%
+  complete(year, cell_num, tax)
+```
+
+
+
+```{r}
+y <- read_csv(here("data", "CatchNInd2015_2015.csv"), col_types = "iiddd")
+
+# aggregate the numbers
+y %>%
+  select(-ID) %>%
+  group_by(Cell) %>%
+  summarise(across(c(Reported, IUU, Discards), sum, na.rm = TRUE)) ->
+y_sum
+
+y_sum %>%
+  left_join(cells, by = "Cell") %>%
+  select(lon_centre = LonCentre, lat_centre = LatCentre,
+    cell_size_sqkm = OceanAreasqkm, tonnes_reported = Reported,
+    tonnes_iuu.est = IUU, tonnes_discards.est = Discards) %>%
+  mutate(
+    tonnes_total = (tonnes_reported + tonnes_iuu.est + tonnes_discards.est),
+    tonnes_reported_persqkm = tonnes_reported / cell_size_sqkm,
+    tonnes_iuu.est_persqkm = tonnes_iuu.est / cell_size_sqkm,
+    tonnes_discards.est_persqkm = tonnes_discards.est / cell_size_sqkm,
+    tonnes_total_persqkm = tonnes_total / cell_size_sqkm,
+    frac_reported = tonnes_reported / tonnes_total,
+    frac_iuu.est = tonnes_iuu.est / tonnes_total,
+    frac_discards.est = tonnes_discards.est  / tonnes_total) %>%
+  write_csv(here("data", "totals", "csv", "totals-nonind-2015.csv")) %>%
+  select(lon_centre, lat_centre, cell_size_sqkm, ends_with("persqkm"),
+    starts_with("frac")) %>%
+  rast(type = "xyz", digits = 2, crs = "+proj=longlat +datum=WGS84 +no_defs") %>%
+  # project("epsg:3857") %>%
+  writeRaster(
+    here("data", "totals", "raster", "totals-nonind-2015.tif"),
+    overwrite = TRUE) ->
+y_rast
+```
+
+MapLibre doesn't appear to support georeferenced TIFFs. It _does_ support non-georeferenced images such as PNGs, but we need to line them up correctly and style them ourselves.
+
+Correctly sized output can be produced with `terra::writeRaster`, and you can assign colours to values using `coltab()<-`, but it's a bit of a pain: although the internal data structures stores the values you're mapping to, you can only provide the colours. So you need to come up with factor levels, and... this is getting complicated.
+
+My cheeky way of getting 'round all this is to drop MapLibre entirely and just have the controls switch out static PNG maps produced with ggplot2.
+
+```{r}
+world <-
+  ne_countries(scale = "medium", returnclass = "sf") %>%
+  st_make_valid()
+
+equal_earth <- 'PROJCS["ProjWiz_Custom_Natural_Earth",
+ GEOGCS["GCS_WGS_1984",
+  DATUM["D_WGS_1984",
+   SPHEROID["WGS_1984",6378137.0,298.257223563]],
+  PRIMEM["Greenwich",0.0],
+  UNIT["Degree",0.0174532925199433]],
+ PROJECTION["Natural_Earth"],
+ PARAMETER["False_Easting",0.0],
+ PARAMETER["False_Northing",0.0],
+ PARAMETER["Central_Meridian",156],
+ UNIT["Meter",1.0]]'
+
+sf::sf_use_s2(FALSE)
+
+read_csv(here("data", "totals", "csv", "totals-nonind-2015.csv")) %>%
+  select(lon_centre, lat_centre, tonnes_total_persqkm) %>%
+  mutate(kg_persqkm = tonnes_total_persqkm * 1000) %>%
+  select(-tonnes_total_persqkm) %>%
+  # mutate(
+  #   log10_kg_total_persqkm = log10(tonnes_total_persqkm * 1000),
+  #   kg_bin = cut(
+  #     log10(tonnes_total_persqkm * 1000),
+  #     breaks = (-10):10,
+  #     labels = paste("10 *", (-9):10, "kg/sqkm"))) %>%
+  # select(-tonnes_total_persqkm, -log10_kg_total_persqkm) %>%
+  rast(type = "xyz", digits = 2,
+    crs = "+proj=longlat +datum=WGS84 +no_defs") %>%
+  # writeRaster(
+  #   here("data", "totals", "raster", "totalpersqkm-nonind-2015-webmerc.png"),
+  #   overwrite = TRUE)
+  {
+    # this isn't fitting properly!
+    ggplot(data = world) +
+      geom_sf(colour = "#00000011", fill = "#f9f9f9", size = 0.5) +
+      geom_spatraster(data = ., interpolate = TRUE) +
+      coord_sf(crs = equal_earth, expand = FALSE,
+        # xlim = c(-179.99, 179.99),
+        # ylim = c(-75, 75)
+      ) +
+      scale_fill_fermenter(
+        name = "Annual catch (kg fish per square km)",
+        direction = 1,
+        na.value = NA,
+        breaks = 10 ^ c(-9, 6, -3, 0, 3, 6, 9),
+        trans = "log10", 
+        labels = scales::label_number(scale_cut = scales::cut_si(""))
+        ) +
+      theme_360() +
+      theme(
+        legend.direction = "horizontal",
+        legend.position = "top",
+        legend.key.width = unit(1, "inches"),
+        panel.border = element_rect(colour = "black", fill = NA),
+        panel.grid.major = element_line(size = 0.5, colour = "#00000011")
+      ) +
+      guides(fill = guide_colourbar(
+        title.position = "top",
+        title.hjust = 0.5
+        )) +
+      labs(
+        x = NULL, y = NULL,
+        caption = paste(
+          "**CHART:** James Goldie, 360info",
+          "**DATA:** Global Fisheries Landings V4.0",
+          sep = "<br>")) 
+  } %>%
+  save_360plot(
+    here("data", "totals", "png", "test2.png"),
+    shape = "sdtv-landscape")
+```
+
+## Complete dataset
+
+Let's download and cache the _entire_ dataset. Keep in mind that some of them cover a period of more than one year, so we'll also have to divide the counts through by the number of years.
+
+```{r}
+
+# get all the csvs on the page (except the index files)
+dataset_base %>%
+  read_html() %>%
+  html_elements("a") %>%
+  html_attr("href") %>%
+  tibble(link = .) %>%
+  filter(str_detect(link, "^Catch")) %>%
+  mutate(
+    category = if_else(
+      str_detect(link, coll("NInd")),
+      "Non-industrial",
+      "Industrial"),
+    year_range = str_extract(link, "[:digit:]{4}_[:digit:]{4}")) %>%
+  separate(year_range, into = c("year_start", "year_end"), convert = TRUE) %>%
+  mutate(num_years = year_end - year_start + 1) ->
+dataset_files
+
+# now download and cache files
+dataset_files %>%
+  pull(link) %>%
+  paste0(dataset_base, .) %>%
+  set_names(basename(path(.))) %>%
+  board_url(cache = data_cache) ->
+dataset_board
+```
+
+Let's try to download them all (or get the cached ones):
+
+```{r}
+dataset_files %>%
+  mutate(cached_path = map(link, ~ pin_download(dataset_board, .x))) ->
+cached_files
+```
+
+(Okay, the `{pins}` cache isn't working properly, and I'm not downloading these all again! Let's just manually dig them out of the cache and move on.)
+
+```{r}
+#| label: cacherepair
+cache_files <-
+  tibble(
+    path = list.files(data_cache, pattern = glob2rx("*.csv"),
+      recursive = TRUE),
+    file = basename(path))
+
+dataset_files %>%
+  left_join(cache_files, by = c("link" = "file")) ->
+dataset_cached
+```
+
+Now, for each file, we're going to:
+
+1. Boil this down to summary stats per year and per grid cell, and
+2. Create the TIFs, plots, etc.
+
+Let's define those functions first:
+
+```{r}
+#| label: cellindex
+download.file(
+  paste0(dataset_base, "Codes.xlsx"),
+  destfile = here("data", "Codes.xlsx"))
+
+cells <-
+  here("data", "Codes.xlsx") %>%
+  read_excel(sheet = "Cell") %>%
+  mutate(Cell = as.integer(Cell))
+```
+
+```{r}
+#| label: summaryfn
+summarise_events <- function(path_ind, category, year_start, year_end) {
+
+  # first, work out how many years we need (to get annual figures)
+  year_count <- year_end - year_start + 1
+
+  path_ind %>%
+    read_csv(col_types = "iiddd") %>%
+    select(-ID) %>%
+    # calculate totals for each cell/year (in kg/yr, not tonnes)
+    group_by(Cell) %>%
+    summarise(across(c(Reported, IUU, Discards), sum, na.rm = TRUE)) %>%
+    mutate(across(c(Reported, IUU, Discards), ~ .x * 1000 / year_count)) %>%
+    # now get the cell location info and work out additional stats
+    left_join(cells, by = "Cell") %>%
+    select(lon_centre = LonCentre, lat_centre = LatCentre,
+      cell_size_sqkm = OceanAreasqkm, kg_reported = Reported,
+      kg_iuu.est = IUU, kg_discards.est = Discards) %>%
+    mutate(
+      kg_total = (kg_reported + kg_iuu.est),
+      kg_reported_persqkm = kg_reported / cell_size_sqkm,
+      kg_iuu.est_persqkm = kg_iuu.est / cell_size_sqkm,
+      kg_discards.est_persqkm = kg_discards.est / cell_size_sqkm,
+      kg_total_persqkm = kg_total / cell_size_sqkm,
+      frac_reported = kg_reported / kg_total,
+      frac_iuu.est = kg_iuu.est / kg_total,
+      frac_discards.est = kg_discards.est  / kg_total) -># %>%
+    # write_csv(here("data", "totals", "csv",
+    #   paste0("totals-", category, "-", start_year, "-", end_year, ".csv"))) ->
+  totals
+    
+  # write out a raster
+  totals %>%
+    select(lon_centre, lat_centre, cell_size_sqkm, ends_with("persqkm"),
+      starts_with("frac")) %>%
+    rast(type = "xyz", digits = 2,
+      crs = "+proj=longlat +datum=WGS84 +no_defs") %>%
+    # project("epsg:3857") %>%
+    writeRaster(
+      here("data", "totals", "raster",
+        paste0("totals-", category, "-", year_start, "-", year_end, ".tif")),
+      overwrite = TRUE) ->
+  totals_raster
+
+  # we want maps for each of these columns
+  map_cols <- tibble(
+    name = c(
+      "kg_total_persqkm",
+      "kg_reported_persqkm", "kg_iuu.est_persqkm", "kg_discards.est_persqkm",
+      "frac_iuu.est", "frac_discards.est"),
+    longname = c(
+      "Total (reported + IUU) avg. annual catch (kg fish/sq. km)",
+      "Reported avg. annual catch (kg fish/sq. km)",
+      "Estimated avg. annual IUU catch (kg fish/sq. km)",
+      "Estimated caught but discarded fish (kg fish/sq. km)",
+      "Estimated IUU percentage of avg. annual catch",
+      "Estimated avg. annual discard as percentage of catch"),
+    palette_name = c("Blues", "BuGn", "YlOrRd", "BuPu", "RdYlBu", "PuOr"),
+    palette_dir = c(rep(1, 4), -1, 1))
+
+  scale_fill_kg <- partial(scale_fill_fermenter,
+    type = "seq",
+    na.value = NA,
+    breaks = 10 ^ c(-9, 6, -3, 0, 3, 6, 9),
+    limits = 10 ^ c(-9, 9),
+    trans = "log10",
+    labels = scales::label_number(scale_cut = scales::cut_si("")))
+  scale_fill_pct <- partial(scale_fill_fermenter,
+    type = "div",
+    na.value = NA,
+    breaks = seq(0, 1, 0.2),
+    limits = c(0, 1),
+    labels = scales::label_percent())
+
+  for (selected_col in map_cols$name) {
+
+    # selected column name + palette info + scale fn
+    map_col <- map_cols %>% filter(name == selected_col)
+    scale_fill_selected <- if(str_detect(selected_col, "^kg_")) {
+      scale_fill_kg
+    } else {
+      scale_fill_pct
+    }
+
+    totals %>%
+      select(lon_centre, lat_centre, contains(selected_col)) %>%
+      rast(type = "xyz", digits = 2,
+        crs = "+proj=longlat +datum=WGS84 +no_defs") %>%
+      {
+        ggplot(data = world) +
+          geom_sf(colour = "#00000011", fill = "#f9f9f9", size = 0.5) +
+          geom_spatraster(data = ., interpolate = TRUE) +
+          coord_sf(crs = equal_earth, expand = FALSE) +
+          scale_fill_selected(
+            palette = map_col$palette_name,
+            direction = map_col$palette_dir) +
+          theme_360() +
+          theme(
+            legend.direction = "horizontal",
+            legend.position = "top",
+            legend.key.width = unit(1.1, "inches"),
+            panel.border = element_rect(colour = "black", fill = NA),
+            panel.grid.major = element_line(size = 0.5, colour = "#00000011"),
+            plot.subtitle = element_text(
+              size = rel(1.1),
+              margin = margin(0, 0, 0, 0, "mm"))
+          ) +
+          guides(
+            fill = guide_colourbar(
+              # title = paste(map_col$longname, "in", year_start, "to", year_end),
+              title.position = "top",
+              title.hjust = 0.5
+            )) +
+          labs(
+            x = NULL, y = NULL, fill = NULL,
+            subtitle =
+              paste(map_col$longname, "in", year_start, "to", year_end),
+            caption = paste(
+              "**CHART:** James Goldie, 360info",
+              "**DATA:** Global Fisheries Landings V4.0",
+              sep = "<br>"))
+      } %>%
+      save_360plot(
+        here("data", "totals", "png",
+          paste0(category, "-", selected_col, "-", year_start, "-", year_end,
+            ".png")),
+        shape = "sdtv-landscape")
+  }
+}
+
+
+```
+
+```{r}
+#| label: geodefs
+world <-
+  ne_countries(scale = "medium", returnclass = "sf") %>%
+  st_make_valid()
+
+equal_earth <- 'PROJCS["ProjWiz_Custom_Natural_Earth",
+ GEOGCS["GCS_WGS_1984",
+  DATUM["D_WGS_1984",
+   SPHEROID["WGS_1984",6378137.0,298.257223563]],
+  PRIMEM["Greenwich",0.0],
+  UNIT["Degree",0.0174532925199433]],
+ PROJECTION["Natural_Earth"],
+ PARAMETER["False_Easting",0.0],
+ PARAMETER["False_Northing",0.0],
+ PARAMETER["Central_Meridian",156],
+ UNIT["Meter",1.0]]'
+
+sf::sf_use_s2(FALSE)
+```
+
+And now let's process them all!
+
+```{r}
+dataset_cached %>%
+  mutate(path_ind = file.path(data_cache, path)) %>%
+  select(path_ind, category, year_start, year_end) %>%
+  pmap(summarise_events)
+
+  # summarise_events
+  
+```

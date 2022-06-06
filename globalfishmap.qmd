@@ -1,11 +1,8 @@
 ---
-title: "Test headline"
-subtitle: "And some additional comment here"
+title: "Global fishing"
+subtitle: "Fish are a significant part of diets globally, but many fish are **caught illegally or discarded.** This map shows the **global fishing hotspots.**"
 page-layout: custom
 theme: none
-# this includes some default css for the titling, the bootstrap icons (since
-# they only come with the bootstrap themes usually), and some extra css for the
-# modals 
 css:
   - style/embed.css
   - https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.2/font/bootstrap-icons.css
@@ -32,10 +29,12 @@ execute:
   (if there isn't room, put it in the ABOUT dialog) -->
 James Goldie, 360info
 
-Data: [GFL4](https://metadata.imas.utas.edu.au/geonetwork/srv/api/records/5c4590d3-a45a-4d37-bf8b-ecd145cb356d)
+[GFL4](https://metadata.imas.utas.edu.au/geonetwork/srv/api/records/5c4590d3-a45a-4d37-bf8b-ecd145cb356d)
+
 :::
 
 <!-- main content -->
+::: {style="background: #36a7e911; padding: 10px"}
 
 ```{ojs}
 viewof category = Inputs.radio(["Industrial", "Non-industrial"], {
@@ -47,15 +46,16 @@ viewof category = Inputs.radio(["Industrial", "Non-industrial"], {
 ```{ojs}
 viewof measure = Inputs.select(
   new Map([
-    ["Discard fraction",                      "frac_discards.est"],
-    ["Fraction IUU",                          "frac_iuu.est"],
-    ["Discards, estimated",                   "kg_discards.est_persqkm"],
-    ["IUU catch, estimated",                  "kg_iuu.est_persqkm"],
-    ["Reported catch",                        "kg_reported_persqkm"],
-    ["Total catch (reported + IUU estimate)", "kg_total_persqkm"]
+    ["Total estimated catch",          "kg_total_persqkm"],
+    ["Reported catch",                 "kg_reported_persqkm"],
+    ["Illegal (IUU) catch, estimated", "kg_iuu.est_persqkm"],
+    ["Fish discarded, estimated",      "kg_discards.est_persqkm"],
+    ["Illegal (IUU) percentage",       "frac_iuu.est"],
+    ["Discard percentage",             "frac_discards.est"]
   ]), {
     value: "kg_total_persqkm",
-    label: "Measure"
+    label: "Measure",
+    width: 300
   });
 ```
 
@@ -63,14 +63,16 @@ viewof measure = Inputs.select(
 viewof year = Inputs.range([1950, 2015], {
   value: 2015,
   step: 1,
-  label: "Year"
-})
+  label: "Year",
+  width: 300
+});
 ```
 
 ```{ojs}
 //| include: false
 
-// yeah, I should be using d3.bin...
+/*  map the selected year to the available images
+   (yeah, I should be using d3.bin...) */
 binYear = function(year) {
   if (year < 1950) return undefined  
     else if (year <= 1954) return "1950-1954"
@@ -92,16 +94,20 @@ binYear = function(year) {
 
 binnedYear = binYear(year);
 ```
+:::
 
+::: {style="margin-top: 20px"}
 ```{ojs}
 //| label: selectedimage
 
-// getting a bit of a flash when updating this -
-// perhaps doing some async to wait for it to load
-// would be better?
+/* display the selected image
+   getting a bit of a flash when updating this -
+   perhaps doing some async to wait for it to load
+   would be better? */
 
 html`<img src="/data/totals/png/${category}-${measure}-${binnedYear}.png" style="width:100%;"></img>`
 ```
+:::
 
 <!-- share/about popups -->
 
@@ -128,7 +134,7 @@ micro.init({
 
 These charts, as well as the analyses that underpin them, are available under a [**Creative Commons Attribution 4.0 licence**](https://creativecommons.org/licenses/by/4.0).
 
-Please acknowledge [360info](https://360info.org) and [Watson 2017](https://www.nature.com/articles/sdata201739) when you use these charts and data.
+Please acknowledge [360info](https://360info.org) and [Watson (2017)](https://www.nature.com/articles/sdata201739) when you use these charts and data.
 
 #### Embed this chart in your article
 
@@ -138,13 +144,11 @@ Copy and paste the following code:
 ```
 <iframe
 src="https://360info-revivingoceans.pages.dev/
-embed-netflow-scatter" title="Chart with Human
-Development Index increasing to the right and Net
-Student Ratio increasing upward. Countries situated
-above the line, in blue, are receiving more
-students from other countries than they send out."
-width="550" height="560" scrolling="no"
-style="border:none;"></iframe>
+globalfishmap.html" title="Measure of reported
+and illegal fishing, as well as discarded fish
+since 1950. Data comes from the Global Fisheries
+Landings v4 dataset." width="500" height="560"
+scrolling="no" style="border:none;"></iframe>
 ```
 :::
 
@@ -178,6 +182,12 @@ Visit the [GitHub repository](https://github.com/360-info/report-revivingoceans/
 These are statistics of reported fish catches (that is, the weight of fish that are caught at sea and brought back to port), as well as estimates of discards (fish caught but discarded) and of Illegal, Unreported and Unregulated (IUU) fish catches globally from 1950 to 2015.
 
 These figures are aggregated from fishing events in the [Global Fisheries Landings v4](https://researchdata.edu.au/global-fisheries-landings-v40/1361113) dataset. The analysis is described in [Watson 2017](https://www.nature.com/articles/sdata201739).
+
+"Illegal" catch in these figures refers to Illegal, Unreported and Unregulated (IUU) fishing. The total catch is the sum of reported and illegal catch (but not discards).
+
+Disccard percentage is the discarded fish, expressed as a percentage of the total (reported and illegal) catch.
+
+Note that data was unavailable in some regions during some years.
 ::::
 
 :::::
