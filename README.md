@@ -1,6 +1,8 @@
-# 360info report template
+# Reviving oceans
 
-What's this report all about? What kind of charts or analysis have we done?
+Visualises reported fishing catch globally over the last 70 years, as well as estimate sof illegal fishing and discarded fish.
+
+![Industrial-kg_reported_persqkm-1950-1954](https://user-images.githubusercontent.com/6520659/172083579-152824ec-864d-4fa2-ba97-7b5935a273ca.png)
 
 ## Use + Remix rights
 
@@ -12,7 +14,7 @@ These charts, as well as the analyses that underpin them, are available under a 
 
 Data in these charts comes from:
 
-* Data sources here (with links!)
+* [Global Fisheries Landings V4.0](https://metadata.imas.utas.edu.au/geonetwork/srv/api/records/5c4590d3-a45a-4d37-bf8b-ecd145cb356d). The accompanying paper is [Watson (2017)](https://www.nature.com/articles/sdata201739).
 
 **Please attribute 360info and the data sources when you use and remix these visualisations.**
 
@@ -28,10 +30,10 @@ You'll need to:
   * Then run `renv::restore()` to install the R package dependencies.
   * (For problems satisfying R package dependencies, refer to [Quarto's documentation on virtual environments](https://quarto.org/docs/projects/virtual-environments.html).)
 
-Now, render the `.qmd` files to the `/docs` directory with:
+Now, render the `.qmd` files to the `/out` directory with:
 
 ```sh
-quarto render --output-dir docs *.qmd
+quarto render
 ```
 
 ## Help
